@@ -1,0 +1,94 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 12
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #F7F9FC
+  BorderColor #4A6FA5
+  ArrowColor #4A6FA5
+}
+hide empty members
+title 图 3b 规则对象：权限、统计口径与校验
+
+class "报名状态\nRegistrationStatus\n（见核心类图）" as RegistrationStatus <<外部引用>>
+
+package "权限规则" {
+  class "访问上下文\nAccessContext" as AccessContext {
+    +actor: ActorContext
+    +owner_id: UserId
+    +participant_id: UserId
+    +purchaser_id: UserId
+    +session_id: EventSessionId
+    +registration_id: RegistrationId
+    +is_blacklisted: bool
+    +inspector_assigned: bool
+    +has_checked_in: bool
+    +is_event_visible: bool
+    +now: datetime
+  }
+  class "权限策略\nAccessPolicy" as AccessPolicy {
+    +require(ctx, action)
+    +can(ctx, action): bool
+    +actions_for(actor): Action[]
+  }
+  enum "动作\nAction" as Action {
+    EVENT_CREATE
+    EVENT_EDIT
+    EVENT_REVIEW
+    REGISTER
+    CHECKIN_SCAN
+    EVALUATE
+    ROSTER_EXPORT
+    FULL_EXPORT_APPROVE
+    ...
+  }
+  class "密码策略\nPasswordPolicy" as PasswordPolicy {
+    +MIN_LENGTH: int
+    +validate(raw)
+  }
+  class "登录节流\nLoginThrottlePolicy" as LoginThrottlePolicy {
+    +MAX_FAILURES: int
+    +LOCK_DURATION: timedelta
+    +is_locked(locked_until, now): bool
+    +next_state(failures, locked_until, success, now)
+  }
+}
+
+package "统计口径与校验" {
+  class "参与率口径\nParticipationRatePolicy" as ParticipationRatePolicy {
+    +DENOMINATOR: set
+    +compute(checked_in, denominator): Decimal
+  }
+  class "补签窗口\nCheckInWindowPolicy" as CheckInWindowPolicy {
+    +WINDOW: timedelta
+    +is_open(session_end, now): bool
+  }
+  class "代报上限\nBeneficiaryPolicy" as BeneficiaryPolicy {
+    +MAX_BENEFICIARIES: int
+    +validate(purchaser, beneficiaries)
+  }
+  class "排序计划\nSortPlan" as SortPlan {
+    +ALLOWED: Mapping
+    +MAX_KEYS: int
+    +normalize(raw): SortSpec[]
+  }
+  class "手机号脱敏\nContactMasker" as ContactMasker {
+    +mask(phone): str
+  }
+}
+
+AccessPolicy ..> AccessContext : 读取扁平事实
+AccessPolicy ..> Action : 规则键
+ParticipationRatePolicy ..> RegistrationStatus : 分母口径
+
+legend right
+  AccessPolicy 只依赖 AccessContext 的扁平事实，不查库；
+  is_blacklisted / inspector_assigned / has_checked_in 由用例填入。
+  参与率分母 = REGISTERED + CHECKED_IN + ABSENT；
+  排除候补、已取消、已失效。
+  补签窗口 = 场次结束后 2 小时；代报上限 = 3 人。
+endlegend
+@enduml

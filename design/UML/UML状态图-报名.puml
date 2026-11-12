@@ -1,0 +1,47 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 12
+skinparam state {
+  BackgroundColor #F7F9FC
+  BorderColor #4A6FA5
+  ArrowColor #4A6FA5
+}
+title 图 7 报名记录状态图（Registration）
+
+[*] --> REGISTERED : 有名额，报名成功
+[*] --> WAITLISTED : 场次/票种已满
+state "候补中\nWAITLISTED" as WAITLISTED
+state "已报名\nREGISTERED" as REGISTERED
+state "已签到\nCHECKED_IN" as CHECKED_IN
+state "已缺席\nABSENT" as ABSENT
+state "已取消\nCANCELLED" as CANCELLED
+state "已失效\nINVALIDATED" as INVALIDATED
+
+WAITLISTED --> REGISTERED : 递补成功\n（按 waitlist_no）
+WAITLISTED --> CANCELLED : 本人取消 / 场次结束
+WAITLISTED --> INVALIDATED : 活动取消
+
+REGISTERED --> CHECKED_IN : 扫码验票签到
+REGISTERED --> ABSENT : 场次结束未签到
+REGISTERED --> CANCELLED : 本人取消（不退款）
+REGISTERED --> INVALIDATED : 活动取消
+
+ABSENT --> CHECKED_IN : 人工补签\n（2 小时内 + 已分配 + 审计）
+
+CHECKED_IN --> [*]
+ABSENT --> [*]
+CANCELLED --> [*]
+INVALIDATED --> [*]
+
+legend right
+  终态：CHECKED_IN / ABSENT / CANCELLED / INVALIDATED。
+  唯一受控例外：ABSENT → CHECKED_IN 仅补签用例可传
+  TransitionOverride.MANUAL_CHECK_IN，且必须写审计。
+  支付状态只有 PAID / REFUNDED：
+  新建（含候补）PAID；活动取消/取消候补 REFUNDED；
+  参与者取消已确认报名不退款，保持 PAID。
+endlegend
+@enduml

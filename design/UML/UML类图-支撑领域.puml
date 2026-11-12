@@ -1,0 +1,146 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 12
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #F7F9FC
+  BorderColor #4A6FA5
+  ArrowColor #4A6FA5
+}
+hide empty members
+title 图 2 支撑领域类图（互动 / 通知 / 报表 / 审计）
+
+class "用户\nUser\n（见核心类图）" as User <<外部引用>>
+class "活动\nEvent\n（见核心类图）" as Event <<外部引用>>
+
+package "互动治理 M5" {
+  class "评价\nEvaluation" as Evaluation {
+    +id: str
+    +event_id: EventId
+    +session_id: EventSessionId
+    +participant_id: UserId
+    +rating: int
+    +content: str
+    +created_at: datetime
+  }
+  class "举报\nReport" as Report {
+    +id: str
+    +event_id: EventId
+    +reporter_id: UserId
+    +reason: str
+    +status: ReportStatus
+    +handled_by: UserId
+    +result_note: str
+    +dismiss(admin, note, now)
+    +warn(admin, note, now)
+    +unlist(admin, note, now)
+  }
+  class "收藏\nFavorite" as Favorite {
+    +user_id: UserId
+    +event_id: EventId
+    +created_at: datetime
+  }
+}
+
+package "通知 M6" {
+  class "站内消息\nNotificationMessage" as NotificationMessage {
+    +id: str
+    +user_id: UserId
+    +type: NotificationType
+    +event_id: EventId
+    +payload: Mapping
+    +created_at: datetime
+    +read_at: datetime
+    +dedupe_key: str
+    +mark_read(now)
+  }
+  class "发件箱\nOutboxMessage" as OutboxMessage {
+    +id: str
+    +event_type: str
+    +payload: Mapping
+    +created_at: datetime
+    +published_at: datetime
+    +attempts: int
+    +last_error: str
+  }
+}
+
+package "报表 M7" {
+  class "导出申请\nExportRequest" as ExportRequest {
+    +id: str
+    +event_id: EventId
+    +requester_id: UserId
+    +scope: ExportScope
+    +status: ExportStatus
+    +purpose: str
+    +approved_by: UserId
+    +approve(admin, now)
+    +reject(admin, note, now)
+  }
+}
+
+package "审计 M8" {
+  class "审计日志\nAuditEntry" as AuditEntry {
+    +id: str
+    +at: datetime
+    +actor_id: UserId?
+    +actor_account: str?
+    +actor_role: Role?
+    +action: str
+    +target_type: str
+    +target_id: str
+    +before: Mapping
+    +after: Mapping
+    +result: str
+    +ip: str
+  }
+}
+
+package "枚举" {
+  enum "通知类型\nNotificationType" as NotificationType {
+    REGISTRATION_SUCCESS
+    WAITLIST_PROMOTED
+    EVENT_CANCELLED
+    REVIEW_RESULT
+    SALE_REMINDER
+    REPORT_RESOLVED
+  }
+  enum "举报状态\nReportStatus" as ReportStatus {
+    PENDING
+    DISMISSED
+    WARNED
+    UNLISTED
+  }
+  enum "导出范围\nExportScope" as ExportScope {
+    MASKED
+    FULL
+  }
+  enum "导出状态\nExportStatus" as ExportStatus {
+    PENDING
+    APPROVED
+    REJECTED
+  }
+}
+
+User "1" -- "*" Evaluation : 评价
+Event "1" -- "*" Evaluation
+User "1" -- "*" Report : 举报
+Event "1" -- "*" Report
+User "1" -- "*" Favorite : 收藏
+Event "1" -- "*" Favorite
+User "1" -- "*" NotificationMessage : 接收
+Event "1" -- "*" ExportRequest : 导出
+User "1" -- "*" ExportRequest : 申请
+User "0..1" -- "*" AuditEntry : 操作人
+
+legend right
+  类图只列关键字段与方法，完整签名见设计文档 §4.5。
+  Evaluation 唯一键：(session_id, participant_id)，且仅 CHECKED_IN 可评
+  Report 处理结论一次，举报人可查询结果
+  NotificationMessage 唯一键：(user_id, type, dedupe_key)
+  AuditEntry 只追加，不提供 update/delete
+endlegend
+@enduml

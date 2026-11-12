@@ -1,0 +1,63 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 11
+skinparam sequence {
+  ArrowColor #4A6FA5
+  ActorBorderColor #4A6FA5
+  LifeLineBorderColor #4A6FA5
+  ParticipantBackgroundColor #F7F9FC
+  ParticipantBorderColor #4A6FA5
+}
+title 图 9 序列图：报名与并发抢最后 1 个名额
+autonumber
+
+actor "参与者 A" as PA
+actor "参与者 B" as PB
+participant "Web / UI" as Web
+participant "RegistrationService" as RS
+participant "IdempotencyStore" as Idem
+participant "SeatInventoryPort" as INV
+participant "RegistrationRepository" as Repo
+participant "OutboxPort" as Out
+participant "NotificationService" as Noti
+
+PA -> Web : 提交报名（Idempotency-Key）
+Web -> RS : register(cmd, actor)
+RS -> Idem : get(actor.user_id, "register", key)
+Idem --> RS : miss
+RS -> RS : 权限 / 截止 / 黑名单校验
+RS -> INV : claim(session, ticket_type, now)
+note over INV
+  单条条件更新：
+  UPDATE ... WHERE booked_count < capacity
+  rowcount = 1 才成功；并发下数据库串行化
+end note
+INV --> RS : SeatClaim(GRANTED, seat_no = 100)
+RS -> Repo : add(REGISTERED)
+RS -> Out : enqueue(RegistrationConfirmed)
+RS --> Web : 报名成功（座位号 100）
+Web --> PA : 显示票证二维码
+
+PB -> Web : 同时提交报名
+Web -> RS : register(cmd, actor)
+RS -> INV : claim(session, ticket_type, now)
+INV --> RS : SeatClaim(WAITLISTED, waitlist_no = 1)
+RS -> Repo : add(WAITLISTED, payment_status = PAID)
+RS -> Out : enqueue(RegistrationWaitlisted)
+RS --> Web : 已进入候补，序号 1
+Web --> PB : 显示候补状态
+
+note over INV
+  10 个并发请求抢最后 1 个名额：
+  1 条 rowcount=1 → REGISTERED；
+  其余 9 条 → WAITLISTED（或提示失败）。
+  唯一索引 (session_id, participant_id) 防重复。
+end note
+
+Out -> Noti : relay_outbox → handle_event
+Noti -> Noti : 按 NotificationType 生成消息\n并检查 dedupe_key
+Noti --> PA : 站内消息：报名成功
+Noti --> PB : 站内消息：已进入候补
+@enduml

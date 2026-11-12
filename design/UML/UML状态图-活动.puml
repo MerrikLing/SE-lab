@@ -1,0 +1,43 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 12
+skinparam state {
+  BackgroundColor #F7F9FC
+  BorderColor #4A6FA5
+  ArrowColor #4A6FA5
+}
+title 图 6 活动状态图（Event）
+
+[*] --> DRAFT : 组织者创建草稿
+state "草稿\nDRAFT" as DRAFT
+state "待审核\nPENDING_REVIEW" as PENDING_REVIEW
+state "审核未通过\nREVIEW_REJECTED" as REVIEW_REJECTED
+state "已发布\nPUBLISHED" as PUBLISHED
+state "已结束\nENDED" as ENDED
+state "已取消\nCANCELLED" as CANCELLED
+
+DRAFT --> PENDING_REVIEW : 提交审核\n（至少 1 场次 1 票种）
+PENDING_REVIEW --> PUBLISHED : 管理员审核通过
+PENDING_REVIEW --> REVIEW_REJECTED : 管理员审核不通过
+PENDING_REVIEW --> CANCELLED : 组织者取消（未开始）
+REVIEW_REJECTED --> PENDING_REVIEW : 修改后重新提交
+REVIEW_REJECTED --> CANCELLED : 组织者取消
+PUBLISHED --> PENDING_REVIEW : 实质性修改\n票价/场次/容量/时间/地点
+PUBLISHED --> ENDED : 所有场次结束
+PUBLISHED --> CANCELLED : 组织者取消\n（now < 最早场次开始）
+DRAFT --> CANCELLED : 组织者取消
+
+ENDED --> [*]
+CANCELLED --> [*]
+
+legend right
+  visibility（LISTED / DELISTED）与 status 正交：
+  管理员下架只改 visibility + 写审计，不改变 status。
+  查询只返回 status ∈ {PUBLISHED, ENDED} 且 visibility = LISTED。
+  审核未通过不可直接发布，只能重新提交或取消。
+  已发布活动因实质性修改回到 PENDING_REVIEW 期间从公开查询隐藏。
+endlegend
+@enduml

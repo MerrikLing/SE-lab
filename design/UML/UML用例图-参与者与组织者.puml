@@ -1,0 +1,69 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 12
+skinparam usecase {
+  BackgroundColor #F7F9FC
+  BorderColor #4A6FA5
+  ArrowColor #4A6FA5
+}
+left to right direction
+title 图 5a 用例图：参与者与组织者
+
+actor "参与者" as P
+actor "组织者" as O
+
+rectangle "活动票务与报名系统" {
+  package "参与者用例" {
+    usecase "查询与筛选活动" as UC01
+    usecase "查看活动详情" as UC02
+    usecase "报名 / 代他人报名" as UC03
+    usecase "取消报名" as UC04
+    usecase "查看我的报名与票证" as UC05
+    usecase "评价活动" as UC06
+    usecase "收藏活动" as UC07
+    usecase "举报活动 / 查看结果" as UC08
+    usecase "申请成为组织者" as UC09
+    usecase "查看站内消息" as UC10
+  }
+  package "组织者用例" {
+    usecase "创建活动（场次/票种）" as UC11
+    usecase "编辑活动（场次/票种）" as UC12
+    usecase "提交审核" as UC13
+    usecase "取消活动" as UC14
+    usecase "查看 / 导出名单" as UC15
+    usecase "查看容量与参与率" as UC16
+    usecase "拉黑 / 解除拉黑" as UC17
+    usecase "分配 / 撤销检票员" as UC18
+  }
+}
+
+P --> UC01
+P --> UC02
+P --> UC03
+P --> UC04
+P --> UC05
+P --> UC06
+P --> UC07
+P --> UC08
+P --> UC09
+P --> UC10
+
+O --> UC11
+O --> UC12
+O --> UC13
+O --> UC14
+O --> UC15
+O --> UC16
+O --> UC17
+O --> UC18
+
+legend right
+  参与者只能查看本人报名与公开容量信息；
+  "我的"查询由 ActorContext 推导用户，不接收裸 user_id。
+  组织者只能管理本人活动；修改票价/场次/容量/时间/地点需重新审核。
+  参与者可申请成为组织者，审批由管理员完成。
+endlegend
+@enduml

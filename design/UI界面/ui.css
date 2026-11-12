@@ -1,0 +1,182 @@
+:root{
+  --paper:#F5EFE3;
+  --paper-2:#FFFCF5;
+  --ink:#151515;
+  --muted:#716B5F;
+  --line:#D8CFBC;
+  --blue:#2447FF;
+  --orange:#FF4D00;
+  --mint:#B9F2C9;
+  --dark:#121212;
+  --white:#FFFFFF;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:1440px;height:900px;overflow:hidden}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Segoe UI","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+  font-size:14px;
+  -webkit-font-smoothing:antialiased;
+  position:relative;
+}
+body::before{
+  content:"";
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(rgba(21,21,21,.10) .55px,transparent .55px);
+  background-size:5px 5px;
+  opacity:.28;
+}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+::selection{background:var(--blue);color:#fff}
+
+.app{position:relative;z-index:1;display:grid;grid-template-columns:226px 1fr;height:900px}
+.sidebar{
+  border-right:1px solid var(--line);
+  padding:26px 20px 20px;
+  display:flex;flex-direction:column;
+  background:rgba(255,252,245,.38);
+}
+.main{padding:24px 36px 26px;min-width:0;display:flex;flex-direction:column}
+
+/* brand */
+.brand{display:flex;align-items:flex-end;gap:10px;margin-bottom:26px}
+.brand-mark{width:13px;height:13px;background:var(--orange);flex:0 0 auto;margin-bottom:4px}
+.brand-name{font-family:"Bahnschrift","Microsoft YaHei UI",sans-serif;font-size:30px;line-height:.82;font-weight:800;letter-spacing:-1.5px}
+.brand-sub{font-family:"Cascadia Mono",Consolas,monospace;font-size:9px;line-height:1.4;letter-spacing:2.4px;color:var(--muted);margin-left:2px}
+
+/* role */
+.role-switch{
+  border:1px solid var(--ink);background:var(--paper-2);
+  padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;
+  margin-bottom:20px;cursor:pointer;
+}
+.role-switch .role{font-size:13px;font-weight:700;line-height:1.2}
+.role-switch small{display:block;font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;letter-spacing:1.6px;color:var(--muted);margin-top:3px}
+.role-switch .chev{font-family:"Cascadia Mono",Consolas,monospace;font-size:14px;color:var(--muted)}
+
+/* nav */
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav-label{font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;letter-spacing:2px;color:var(--muted);margin:10px 0 7px}
+.nav a{
+  display:flex;align-items:center;gap:10px;text-decoration:none;
+  padding:9px 8px;border-left:3px solid transparent;font-size:13px;line-height:1;
+}
+.nav a .n{font-family:"Cascadia Mono",Consolas,monospace;font-size:9px;color:var(--muted);width:14px}
+.nav a:hover{background:rgba(21,21,21,.06)}
+.nav a.active{background:var(--ink);color:var(--paper);border-left-color:var(--orange)}
+.nav a.active .n{color:var(--mint)}
+.sidebar-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:14px}
+.user{display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+.user-name{font-size:12px;font-weight:700;line-height:1.2}
+.user-meta{font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;letter-spacing:1px;color:var(--muted);margin-top:3px}
+.sysline{display:flex;justify-content:space-between;font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;letter-spacing:1px;color:var(--muted);margin-top:14px}
+
+/* topbar */
+.topbar{display:flex;align-items:center;justify-content:space-between;height:32px;margin-bottom:18px;gap:16px}
+.crumb{font-family:"Cascadia Mono",Consolas,monospace;font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted)}
+.crumb b{color:var(--ink);font-weight:600}
+.top-actions{display:flex;align-items:center;gap:8px}
+.icon-btn{width:32px;height:32px;border:1px solid var(--line);background:transparent;display:grid;place-items:center;cursor:pointer}
+.icon-btn:hover{border-color:var(--ink)}
+.icon-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);padding:7px 10px;font-family:"Cascadia Mono",Consolas,monospace;font-size:9px;letter-spacing:1px;color:var(--muted)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#1BA24B;display:inline-block}
+
+/* type */
+.eyebrow{font-family:"Cascadia Mono",Consolas,monospace;font-size:9px;letter-spacing:2.2px;text-transform:uppercase;color:var(--muted)}
+.display{font-family:"Bahnschrift","Microsoft YaHei UI",sans-serif;font-weight:800;letter-spacing:-2px;line-height:.94}
+.mono{font-family:"Cascadia Mono",Consolas,monospace}
+.muted{color:var(--muted)}
+.hair{height:1px;background:var(--line);border:0;margin:0}
+
+/* buttons */
+.btn{
+  border:1px solid var(--ink);background:transparent;color:var(--ink);
+  padding:10px 15px;font-size:12px;font-weight:700;line-height:1;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .12s ease,box-shadow .12s ease;
+}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:2px 2px 0 var(--ink)}
+.btn-primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn-primary:hover{box-shadow:2px 2px 0 var(--ink)}
+.btn-accent{background:var(--orange);border-color:var(--orange);color:#fff}
+.btn-ghost{border-color:var(--line);color:var(--ink)}
+.btn-sm{padding:7px 10px;font-size:11px}
+.btn-block{width:100%}
+.btn:focus-visible,.chip:focus-visible,.nav a:focus-visible,.icon-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+/* search / chips */
+.search{display:flex;align-items:center;gap:9px;border:1px solid var(--ink);background:var(--paper-2);height:38px;padding:0 11px;min-width:260px}
+.search svg{width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:1.6;flex:0 0 auto}
+.search input{border:0;background:transparent;outline:0;width:100%;font-size:12px}
+.chip{border:1px solid var(--line);background:transparent;padding:7px 11px;font-size:11px;cursor:pointer;line-height:1;white-space:nowrap}
+.chip:hover{border-color:var(--ink)}
+.chip.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* ticket */
+.ticket{position:relative;background:var(--paper-2);border:1px solid var(--ink)}
+.ticket::before,.ticket::after{
+  content:"";position:absolute;width:12px;height:12px;border-radius:50%;
+  background:var(--paper);border:1px solid var(--ink);left:calc(var(--stub,84px) - 6px);z-index:2;
+}
+.ticket::before{top:-7px}
+.ticket::after{bottom:-7px}
+.ticket-stub{border-right:1px dashed rgba(21,21,21,.55);padding:13px 10px;display:flex;flex-direction:column;justify-content:space-between}
+.ticket-stub .code{font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;letter-spacing:1px;color:var(--muted)}
+.ticket-stub .date{font-family:"Bahnschrift","Microsoft YaHei UI",sans-serif;font-size:25px;line-height:.9;font-weight:800;letter-spacing:-1px;margin-top:8px}
+.ticket-stub .day{font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;letter-spacing:1.6px;color:var(--muted);margin-top:3px}
+.barcode{height:14px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px);opacity:.75}
+
+/* stamp */
+.stamp{display:inline-flex;align-items:center;gap:6px;border:1px solid currentColor;padding:4px 7px;font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;letter-spacing:1.4px;text-transform:uppercase;transform:rotate(-2deg);white-space:nowrap}
+.stamp.orange{color:var(--orange)}
+.stamp.blue{color:var(--blue)}
+.stamp.green{color:#12753A}
+.stamp.dark{color:var(--ink)}
+
+/* meter */
+.meter{height:6px;background:var(--line);overflow:hidden;position:relative}
+.meter i{display:block;height:100%;background:var(--blue)}
+.meter.orange i{background:var(--orange)}
+.meter.green i{background:#1BA24B}
+
+/* tables */
+.table{width:100%;border-collapse:collapse}
+.table th{text-align:left;font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);padding:7px 8px;border-bottom:1px solid var(--line);font-weight:400}
+.table td{padding:9px 8px;border-bottom:1px solid var(--line);font-size:11px;line-height:1.35}
+.table tr:last-child td{border-bottom:0}
+.table .num{font-family:"Cascadia Mono",Consolas,monospace;font-size:10px}
+
+/* form */
+.input,textarea{width:100%;border:1px solid var(--line);background:var(--paper-2);padding:9px 11px;font-size:12px;outline:0}
+.input:focus,textarea:focus{outline:2px solid var(--blue);outline-offset:0}
+textarea{resize:none}
+
+/* layout helpers */
+.row{display:flex;align-items:center}
+.between{display:flex;align-items:center;justify-content:space-between}
+.gap6{gap:6px}.gap8{gap:8px}.gap10{gap:10px}.gap12{gap:12px}.gap16{gap:16px}.gap20{gap:20px}
+.grow{flex:1;min-width:0}
+.tag{display:inline-flex;align-items:center;border:1px solid var(--line);padding:4px 7px;font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;letter-spacing:1px;color:var(--muted)}
+
+/* generic page header */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;border-bottom:1px solid var(--ink);padding-bottom:16px}
+.page-head h1{margin:6px 0 0;font-size:46px}
+.page-head .lede{max-width:520px;color:var(--muted);font-size:12px;line-height:1.65;margin-top:8px}
+
+/* dark */
+body.dark{background:var(--dark);color:var(--paper)}
+body.dark::before{background-image:radial-gradient(rgba(245,239,227,.12) .55px,transparent .55px);opacity:.18}
+body.dark .sidebar{background:#0B0B0B;border-color:#2A2A2A}
+body.dark .brand-sub,body.dark .nav-label,body.dark .sysline,body.dark .user-meta,body.dark .ticket-stub .code,body.dark .ticket-stub .day,body.dark .eyebrow,body.dark .crumb,body.dark .muted{color:#8E897D}
+body.dark .nav a:hover{background:rgba(245,239,227,.07)}
+body.dark .nav a.active{background:var(--paper);color:var(--ink);border-left-color:var(--mint)}
+body.dark .role-switch{border-color:#3A3A3A;background:#171717}
+body.dark .icon-btn{border-color:#333}
+body.dark .ticket{background:#191919;border-color:#3A3A3A}
+body.dark .ticket::before,body.dark .ticket::after{background:var(--dark);border-color:#3A3A3A}
+body.dark .ticket-stub{border-color:#3A3A3A}
+body.dark .barcode{background:repeating-linear-gradient(90deg,var(--paper) 0 2px,transparent 2px 4px,var(--paper) 4px 5px,transparent 5px 8px);opacity:.7}

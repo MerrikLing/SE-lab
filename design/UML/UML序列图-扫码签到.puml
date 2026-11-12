@@ -1,0 +1,60 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 11
+skinparam sequence {
+  ArrowColor #4A6FA5
+  ActorBorderColor #4A6FA5
+  LifeLineBorderColor #4A6FA5
+  ParticipantBackgroundColor #F7F9FC
+  ParticipantBorderColor #4A6FA5
+}
+title 图 11 序列图：扫码验票签到（含重复扫码）
+autonumber
+
+actor "检票员" as I
+participant "CheckInService" as CIS
+participant "QrCodec" as QR
+participant "AccessRepository" as Access
+participant "RegistrationRepository" as Repo
+participant "Registration" as Reg
+participant "AuditService" as Audit
+
+I -> CIS : scan(raw_code, session_id, actor)
+CIS -> QR : verify(raw_code, now)
+QR --> CIS : TicketToken 或 InvalidTicket
+
+alt 验签失败
+  CIS -> Audit : record_failure(actor, CHECK_IN, BAD_SIGNATURE)
+  CIS --> I : 无效票证
+else 验签成功
+  CIS -> CIS : 校验 token.session_id == 扫码场次
+  CIS -> Access : is_assigned(session_id, actor.user_id)
+  Access --> CIS : true / false
+  alt 未分配
+    CIS --> I : 无权限操作该场次
+  else 已分配
+    CIS -> Repo : get(registration_id)
+    Repo --> CIS : Registration
+    alt 状态 = REGISTERED
+      CIS -> Reg : check_in_now(inspector, SCAN, now)
+      CIS -> Repo : save(reg)  // 级联 CheckIn，version 条件
+      CIS -> Audit : record_success
+      CIS --> I : 签到成功
+    else 状态 = CHECKED_IN
+      CIS --> I : 已签到（首次时间 / 操作人）
+    else 状态 = WAITLISTED / CANCELLED / INVALIDATED
+      CIS --> I : 拒绝（状态不允许）
+    else 状态 = ABSENT
+      CIS --> I : 拒绝，请使用补签
+    end
+  end
+end
+
+note over Repo
+  check_in 表 UNIQUE(registration_id)；
+  并发双扫只有一条签到记录；
+  第二条收到唯一冲突 → 返回“已签到”。
+end note
+@enduml

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场次 · 发现活动</title>
+<link rel="stylesheet" href="ui.css">
+<style>
+  .s1-head{display:grid;grid-template-columns:1fr 174px;gap:24px;align-items:end;padding:2px 0 18px;border-bottom:1px solid var(--ink)}
+  .s1-head h1{font-size:66px;margin:8px 0 10px}
+  .s1-head .lede{max-width:520px;color:var(--muted);font-size:12px;line-height:1.65}
+  .s1-count{border-left:1px solid var(--line);padding-left:20px;text-align:right}
+  .s1-count strong{display:block;font-family:"Bahnschrift","Microsoft YaHei UI",sans-serif;font-size:58px;line-height:.85;font-weight:800;color:var(--blue);letter-spacing:-2px}
+  .s1-count .lbl{font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;letter-spacing:1.6px;color:var(--muted);margin-top:8px}
+  .s1-count .sub{font-size:10px;color:var(--muted);margin-top:7px}
+  .s1-filters{display:flex;align-items:center;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .s1-filters .search{flex:0 0 280px}
+  .s1-filters .sort{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:"Cascadia Mono",Consolas,monospace;font-size:9px;letter-spacing:1px;color:var(--muted)}
+  .s1-body{display:grid;grid-template-columns:1fr 330px;gap:22px;padding-top:18px;flex:1;min-height:0}
+  .s1-left{min-width:0;display:flex;flex-direction:column}
+  .featured{display:grid;grid-template-columns:88px 238px 1fr;height:306px;--stub:88px;box-shadow:5px 5px 0 var(--ink)}
+  .featured .poster{background:var(--blue);position:relative;overflow:hidden;border-right:1px solid var(--ink)}
+  .featured .poster .sun{position:absolute;width:210px;height:210px;border-radius:50%;background:var(--orange);right:-56px;top:-48px}
+  .featured .poster .rule{position:absolute;left:16px;right:16px;top:56%;height:1px;background:rgba(255,255,255,.55)}
+  .featured .poster .rule2{position:absolute;left:16px;right:16px;top:60%;height:1px;background:rgba(255,255,255,.35)}
+  .featured .poster .type{position:absolute;left:16px;bottom:16px;color:#fff;font-family:"Bahnschrift","Microsoft YaHei UI",sans-serif;font-size:34px;font-weight:800;line-height:.86;letter-spacing:-1px}
+  .featured .poster .type small{display:block;font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;letter-spacing:2px;font-weight:400;margin-top:7px;color:var(--mint)}
+  .featured .body{padding:17px 19px 14px;display:flex;flex-direction:column}
+  .featured h2{font-family:"Bahnschrift","Microsoft YaHei UI",sans-serif;font-size:33px;line-height:1.02;letter-spacing:-1px;margin:7px 0 8px}
+  .featured .meta{font-size:11px;color:var(--muted);line-height:1.5}
+  .featured .tags{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
+  .featured .bottom{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+  .featured .price{font-family:"Bahnschrift","Microsoft YaHei UI",sans-serif;font-size:26px;font-weight:800;line-height:1}
+  .featured .price small{font-family:"Segoe UI","Microsoft YaHei UI",sans-serif;font-size:10px;font-weight:400;color:var(--muted)}
+  .remaining{font-family:"Cascadia Mono",Consolas,monospace;font-size:9px;letter-spacing:.8px;color:var(--orange)}
+  .upcoming{margin-top:18px;border-top:1px solid var(--ink)}
+  .upcoming-head{display:flex;justify-content:space-between;align-items:center;padding:10px 0 7px}
+  .upcoming-row{display:grid;grid-template-columns:56px 1fr 150px 76px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+  .upcoming-row .time{font-family:"Cascadia Mono",Consolas,monospace;font-size:10px;color:var(--muted)}
+  .upcoming-row .title{font-weight:700;font-size:12px}
+  .upcoming-row .venue{font-size:10px;color:var(--muted)}
+  .upcoming-row .r{font-family:"Cascadia Mono",Consolas,monospace;font-size:9px;text-align:right}
+  .s1-right{display:flex;flex-direction:column;min-height:0}
+  .small-ticket{display:grid;grid-template-columns:62px 1fr;--stub:62px;height:146px;margin-bottom:13px}
+  .small-ticket .body{padding:12px 13px;display:flex;flex-direction:column}
+  .small-ticket h3{font-family:"Bahnschrift","Microsoft YaHei UI",sans-serif;font-size:18px;line-height:1.05;letter-spacing:-.5px;margin:5px 0 5px}
+  .small-ticket .meta{font-size:9px;color:var(--muted);line-height:1.45}
+  .small-ticket .bottom{margin-top:auto;display:flex;justify-content:space-between;align-items:end}
+  .small-ticket .price{font-family:"Bahnschrift","Microsoft YaHei UI",sans-serif;font-size:17px;font-weight:800}
+  .reminder{border:1px solid var(--ink);background:var(--paper-2);padding:14px;margin-top:1px}
+  .reminder h3{font-family:"Bahnschrift","Microsoft YaHei UI",sans-serif;font-size:17px;margin:4px 0 10px;letter-spacing:-.4px}
+  .reminder-item{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:11px}
+  .reminder-item .m{color:var(--muted);font-size:9px;line-height:1.4;margin-top:3px}
+  .reminder-item .when{font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;color:var(--orange);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <div>
+        <div class="brand-name">场次</div>
+        <div class="brand-sub">TICKET / 2026</div>
+      </div>
+    </div>
+
+    <div class="role-switch">
+      <div class="role">参与者<small>PARTICIPANT</small></div>
+      <span class="chev">⌄</span>
+    </div>
+
+    <div class="nav-label">EXPLORE</div>
+    <nav class="nav">
+      <a class="active" href="#"><span class="n">01</span>发现活动</a>
+      <a href="#"><span class="n">02</span>我的票夹</a>
+      <a href="#"><span class="n">03</span>消息中心</a>
+      <a href="#"><span class="n">04</span>收藏与提醒</a>
+    </nav>
+    <div class="nav-label">ACCOUNT</div>
+    <nav class="nav">
+      <a href="#"><span class="n">05</span>个人资料</a>
+      <a href="#"><span class="n">06</span>申请成为组织者</a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="user">
+        <div class="avatar">林</div>
+        <div>
+          <div class="user-name">林然</div>
+          <div class="user-meta">会员 · 上海</div>
+        </div>
+      </div>
+      <div class="sysline"><span>2026</span><span>v0.5</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="crumb"><b>DISCOVER</b> / 发现活动</div>
+      <div class="top-actions">
+        <span class="pill"><span class="live-dot"></span>售票中 · 24 场</span>
+        <button class="icon-btn" aria-label="搜索">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4"></path></svg>
+        </button>
+        <button class="icon-btn" aria-label="消息">
+          <svg viewBox="0 0 24 24"><path d="M5 7h14v10H9l-4 4z"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <section class="s1-head">
+      <div>
+        <div class="eyebrow">CITY &amp; CULTURE / AUTUMN 2026</div>
+        <h1 class="display">这周，去现场。</h1>
+        <p class="lede">从 livehouse 到深夜讲座，把日程表上的空白留给真实发生的事。按地点、时间和票价筛选，找到下一场。</p>
+      </div>
+      <div class="s1-count">
+        <strong>24</strong>
+        <div class="lbl">本周场次 / THIS WEEK</div>
+        <div class="sub">今日开票 08 · 候补 03</div>
+      </div>
+    </section>
+
+    <div class="s1-filters">
+      <div class="search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4"></path></svg>
+        <input placeholder="搜索活动、举办方">
+      </div>
+      <button class="chip active">全部</button>
+      <button class="chip">音乐</button>
+      <button class="chip">讲座</button>
+      <button class="chip">市集</button>
+      <button class="chip">运动</button>
+      <button class="chip">票价</button>
+      <div class="sort">时间优先 <span>↑</span></div>
+    </div>
+
+    <div class="s1-body">
+      <div class="s1-left">
+        <article class="ticket featured">
+          <div class="ticket-stub">
+            <div>
+              <div class="code">EV-1024</div>
+              <div class="date">10/24</div>
+              <div class="day">FRI · 19:30</div>
+            </div>
+            <div class="barcode"></div>
+          </div>
+          <div class="poster">
+            <div class="sun"></div>
+            <div class="rule"></div><div class="rule2"></div>
+            <div class="type">LIVE<br><small>MIDNIGHT RADIO</small></div>
+          </div>
+          <div class="body">
+            <div class="between">
+              <div class="eyebrow">音乐 · 现场 / FEATURED</div>
+              <span class="stamp orange">余票 12</span>
+            </div>
+            <h2>午夜电台<br>现场演出</h2>
+            <div class="meta">10/24 周五 19:30 · 滨江艺术中心 · 主厅<br>主办：回声文化 · 独立乐队联合专场</div>
+            <div class="tags">
+              <span class="tag">独立乐队</span><span class="tag">限量 120 人</span><span class="tag">18+</span>
+            </div>
+            <div class="bottom">
+              <div>
+                <div class="price">¥80 <small>/ 标准票</small></div>
+                <div class="remaining" style="margin-top:5px">余 12 / 120</div>
+              </div>
+              <div class="row gap8">
+                <button class="btn btn-ghost btn-sm">收藏</button>
+                <button class="btn btn-primary">查看场次 →</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <div class="upcoming">
+          <div class="upcoming-head">
+            <div class="eyebrow">即将开始 / UP NEXT</div>
+            <div class="mono" style="font-size:9px;color:var(--muted)">按开始时间排序</div>
+          </div>
+          <div class="upcoming-row">
+            <div class="time">19:00</div>
+            <div><div class="title">算法与偏见：推荐系统如何塑造选择</div><div class="venue">城市图书馆 · 报告厅 · 讲座</div></div>
+            <div class="venue">主办：城市科技社区</div>
+            <div class="r" style="color:var(--muted)">余 45</div>
+          </div>
+          <div class="upcoming-row">
+            <div class="time">19:30</div>
+            <div><div class="title">午夜电台 · 现场演出</div><div class="venue">滨江艺术中心 · 主厅 · 音乐</div></div>
+            <div class="venue">主办：回声文化</div>
+            <div class="r" style="color:var(--orange)">余 12</div>
+          </div>
+          <div class="upcoming-row">
+            <div class="time">20:00</div>
+            <div><div class="title">即兴喜剧夜：没有剧本的 90 分钟</div><div class="venue">西岸小剧场 · 戏剧</div></div>
+            <div class="venue">主办：话剧社</div>
+            <div class="r" style="color:var(--muted)">候补 6</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="s1-right">
+        <article class="ticket small-ticket">
+          <div class="ticket-stub">
+            <div>
+              <div class="code">EV-1025</div>
+              <div class="date">10/25</div>
+              <div class="day">SAT</div>
+            </div>
+            <div class="barcode"></div>
+          </div>
+          <div class="body">
+            <div class="between"><span class="eyebrow">WORKSHOP</span><span class="stamp green">免费</span></div>
+            <h3>从零开始<br>做一档播客</h3>
+            <div class="meta">10/25 周六 14:00<br>创意园 3F</div>
+            <div class="bottom"><span class="price">¥0</span><span class="remaining">余 8 / 30</span></div>
+          </div>
+        </article>
+
+        <article class="ticket small-ticket">
+          <div class="ticket-stub">
+            <div>
+              <div class="code">EV-1026</div>
+              <div class="date">10/26</div>
+              <div class="day">SUN</div>
+            </div>
+            <div class="barcode"></div>
+          </div>
+          <div class="body">
+            <div class="between"><span class="eyebrow">MARKET</span><span class="stamp blue">市集</span></div>
+            <h3>秋日手作<br>与旧书交换</h3>
+            <div class="meta">10/26 周日 11:00<br>中央公园草坪</div>
+            <div class="bottom"><span class="price">¥20</span><span class="remaining">余 34</span></div>
+          </div>
+        </article>
+
+        <section class="reminder">
+          <div class="between">
+            <div class="eyebrow">REMINDERS / 开票提醒</div>
+            <span class="stamp green">已收藏 3</span>
+          </div>
+          <h3>下一批开票</h3>
+          <div class="reminder-item">
+            <div><div>草东没有派对 · 城市巡演</div><div class="m">滨江艺术中心 · 主厅</div></div>
+            <div class="when">11/02 12:00</div>
+          </div>
+          <div class="reminder-item">
+            <div><div>城市戏剧节 · 开幕场</div><div class="m">西岸小剧场</div></div>
+            <div class="when">11/05 10:00</div>
+          </div>
+          <div class="reminder-item">
+            <div><div>冬夜书市 · 摊主招募</div><div class="m">城市图书馆 · 中庭</div></div>
+            <div class="when">11/08 09:00</div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</div>
+</body>
+</html>

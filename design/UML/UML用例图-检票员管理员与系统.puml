@@ -1,0 +1,70 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 12
+skinparam usecase {
+  BackgroundColor #F7F9FC
+  BorderColor #4A6FA5
+  ArrowColor #4A6FA5
+}
+left to right direction
+title 图 5b 用例图：检票员、平台管理员与系统定时任务
+
+actor "检票员" as I
+actor "平台管理员" as A
+actor "系统定时任务" as S <<system>>
+
+rectangle "活动票务与报名系统" {
+  package "检票员用例" {
+    usecase "扫码验票签到" as UC19
+    usecase "场次结束后补签" as UC20
+    usecase "查看分配场次与统计" as UC21
+  }
+  package "管理员用例" {
+    usecase "审核活动（通过/不通过）" as UC22
+    usecase "强制下架 / 恢复上架" as UC23
+    usecase "审批组织者申请" as UC24
+    usecase "处理举报" as UC25
+    usecase "审批完整信息导出" as UC26
+    usecase "查询操作日志" as UC27
+    usecase "查看平台统计" as UC28
+    usecase "角色与权限管理" as UC29
+  }
+  package "系统定时用例" {
+    usecase "场次结束判缺席" as UC30
+    usecase "活动自动结束" as UC31
+    usecase "开票前 1 小时提醒" as UC32
+    usecase "每日备份" as UC33
+  }
+}
+
+I --> UC19
+I --> UC20
+I --> UC21
+
+A --> UC22
+A --> UC23
+A --> UC24
+A --> UC25
+A --> UC26
+A --> UC27
+A --> UC28
+A --> UC29
+
+S --> UC30
+S --> UC31
+S --> UC32
+S --> UC33
+
+UC20 .> UC19 : 扩展
+UC23 .> UC22 : 扩展
+
+legend right
+  检票员只能操作被分配场次；补签限场次结束后 2 小时并写审计。
+  管理员只负责审核、下架、审批、治理与查询，不代替组织者编辑活动。
+  系统定时任务由驱动适配器触发，对应应用服务方法幂等；
+  场次结束把候补置 CANCELLED(SESSION_ENDED)，未签到置 ABSENT。
+endlegend
+@enduml

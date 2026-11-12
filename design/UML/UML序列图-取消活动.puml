@@ -1,0 +1,60 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 11
+skinparam sequence {
+  ArrowColor #4A6FA5
+  ActorBorderColor #4A6FA5
+  LifeLineBorderColor #4A6FA5
+  ParticipantBackgroundColor #F7F9FC
+  ParticipantBorderColor #4A6FA5
+}
+title 图 10 序列图：取消活动（批量失效 + 退款 + 通知）
+autonumber
+
+actor "组织者" as O
+participant "EventLifecycleService" as ELS
+participant "Event" as Event
+participant "RegistrationInvalidationPort" as RIP
+participant "RegistrationRepository" as Repo
+participant "Registration" as Reg
+participant "PaymentGateway" as Pay
+participant "SeatInventoryPort" as Inv
+participant "OutboxPort" as Out
+participant "NotificationService" as Noti
+
+O -> ELS : cancel_event(event_id, reason, actor)
+ELS -> Event : assert_cancellable(now, earliest_session_start)
+ELS -> Event : cancel(now)
+note over ELS
+  同一 UoW：活动状态、报名失效、退款、
+  场次计数归零、发件箱、审计一起提交。
+end note
+
+ELS -> RIP : invalidate_for_event(event_id, reason, now)
+note over RIP
+  契约：在调用方 UoW 内执行，不得自行提交；
+  失败向上抛，由调用方回滚。
+end note
+
+RIP -> Repo : list_by_event(REGISTERED, WAITLISTED)
+loop 每条有效报名
+  RIP -> Reg : invalidate(reason, now)
+  alt payment_status = PAID
+    RIP -> Pay : refund(payment_ref)
+    Pay --> RIP : 幂等成功
+    RIP -> Reg : refund(now) → REFUNDED
+  end
+end
+RIP --> ELS : InvalidationReport(invalidated, refunded, skipped)
+
+ELS -> Inv : reset(each session)
+Note over Inv : booked_count = 0；各票种 sold_count = 0
+ELS -> Out : enqueue(EventCancelled)
+ELS --> O : 取消成功（含影响条数）
+
+Out -> Noti : relay_outbox → handle_event(EventCancelled)
+Noti -> Noti : event_affected_user_ids + dedupe_key
+Noti --> O : 活动取消通知（逐用户）
+@enduml

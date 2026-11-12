@@ -1,0 +1,72 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 12
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #F7F9FC
+  BorderColor #4A6FA5
+  ArrowColor #4A6FA5
+}
+hide empty members
+title 图 3a 规则对象：状态机与编辑重审
+
+class "活动状态\nEventStatus\n（见核心类图）" as EventStatus <<外部引用>>
+class "报名状态\nRegistrationStatus\n（见核心类图）" as RegistrationStatus <<外部引用>>
+
+package "状态规则" {
+  class "活动状态机\nEventStateMachine" as EventStateMachine {
+    +ALLOWED: Mapping
+    +CANCELLABLE: set
+    +ensure(current, target)
+  }
+  class "报名状态机\nRegistrationStateMachine" as RegistrationStateMachine {
+    +ALLOWED: Mapping
+    +ensure(current, target, override)
+  }
+  enum "状态覆盖\nTransitionOverride" as TransitionOverride {
+    MANUAL_CHECK_IN
+  }
+}
+
+package "编辑重审规则" {
+  class "编辑重审策略\nEditReviewPolicy" as EditReviewPolicy {
+    +STRUCTURAL: set
+    +COSMETIC: set
+    +classify(before, after): bool
+  }
+  class "活动快照\nEventSnapshot" as EventSnapshot {
+    +title: str
+    +location: str
+    +start_at: datetime
+    +end_at: datetime
+    +session_count: int
+    +capacities: int[]
+    +ticket_prices: Decimal[]
+    +from_event(event, sessions)
+  }
+  class "活动补丁\nEventPatch" as EventPatch {
+    +title: str
+    +description: str
+    +location: str
+    +start_at: datetime
+    +end_at: datetime
+  }
+}
+
+EventStateMachine ..> EventStatus : 转换
+RegistrationStateMachine ..> RegistrationStatus : 转换
+RegistrationStateMachine ..> TransitionOverride : 唯一例外
+EditReviewPolicy ..> EventSnapshot : 前后对比
+EditReviewPolicy ..> EventPatch : 变更来源
+
+legend right
+  状态机是唯一合法入口；ABSENT → CHECKED_IN 仅补签可传
+  TransitionOverride.MANUAL_CHECK_IN（2h + 已分配 + 审计）。
+  EditReviewPolicy：票价/场次/容量/时间/地点变更需重审；
+  标题/简介/封面等文案变更不重审。
+  已发布活动因实质性修改回到 PENDING_REVIEW 期间从查询隐藏。
+endlegend
+@enduml

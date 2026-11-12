@@ -1,0 +1,56 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 12
+skinparam componentStyle rectangle
+skinparam nodesep 45
+skinparam ranksep 55
+skinparam component {
+  BackgroundColor #F7F9FC
+  BorderColor #4A6FA5
+  ArrowColor #4A6FA5
+}
+left to right direction
+title 图 4 组件图（8 个业务模块 + 共享内核）
+
+package "业务模块" {
+  component "M1 身份与权限\nidentity" as M1
+  component "M2 活动与场次\ncatalog" as M2
+  component "M3 报名与候补\nregistration" as M3
+  component "M4 签到出勤\nattendance" as M4
+  component "M5 互动治理\nsocial" as M5
+  component "M7 统计导出\nreporting" as M7
+  component "M6 通知\nnotification" as M6
+  component "M8 审计\naudit" as M8
+}
+component "M0 共享内核\nshared\nID / DTO / 端口 / UoW" as M0
+
+M2 --> M1 : 身份 / 权限
+M3 --> M2 : 名额 / 活动状态
+M3 --> M1 : 权限
+M4 --> M3 : 签到状态
+M4 --> M2 : 场次 / 分配
+M4 --> M1 : 检票授权
+M5 --> M3 : 签到资格
+M5 --> M2 : 举报下架
+M5 --> M1 : 拉黑判定
+M7 --> M3 : 只读名单
+M7 --> M2 : 只读统计
+M7 --> M1 : 权限
+M1 ..> M0
+M6 ..> M0 : 事件 / OperationsReadPort
+M8 ..> M0 : AuditPort
+M2 ..> M0 : RegistrationInvalidationPort
+
+legend right
+  箭头 = 编译期依赖（A --> B 表示 A 依赖 B）。
+  为可读性省略所有业务模块到 M0 shared 的边；
+  完整依赖 DAG 见设计文档 §2。
+  notification / audit 是叶子，不反向依赖业务模块。
+  catalog 取消活动通过 shared.RegistrationInvalidationPort 倒置依赖。
+  外部入口（Web/UI、调度器）调用各模块应用服务；
+  持久化通过端口由基础设施适配器实现，图中省略。
+endlegend
+@enduml

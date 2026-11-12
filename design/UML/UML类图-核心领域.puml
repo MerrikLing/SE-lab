@@ -1,0 +1,195 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 12
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #F7F9FC
+  BorderColor #4A6FA5
+  ArrowColor #4A6FA5
+}
+hide empty members
+title 图 1 核心领域类图（Event / EventSession / Registration 三聚合）
+
+package "身份与权限 M1" {
+  class "用户\nUser" as User {
+    +id: UserId
+    +account: str
+    +display_name: str
+    +password_hash: str
+    +phone: str
+    +roles: Role[]
+    +is_active: bool
+    +failed_login_count: int
+    +locked_until: datetime
+    +version: int
+    +has_role(role): bool
+    +grant_role(role, now)
+  }
+  class "登录会话\nAuthSession" as AuthSession {
+    +token_hash: str
+    +user_id: UserId
+    +issued_at: datetime
+    +last_active_at: datetime
+    +is_expired(now): bool
+  }
+  class "组织者申请\nOrganizerApplication" as OrganizerApplication {
+    +id: str
+    +applicant_id: UserId
+    +status: ApplicationStatus
+    +submitted_at: datetime
+    +reviewed_by: UserId
+  }
+  class "黑名单\nBlacklistEntry" as BlacklistEntry {
+    +organizer_id: UserId
+    +participant_id: UserId
+    +reason: str
+  }
+  class "检票授权\nSessionAssignment" as SessionAssignment {
+    +session_id: EventSessionId
+    +inspector_id: UserId
+    +revoked_at: datetime
+  }
+}
+
+package "活动与场次 M2" {
+  class "活动\nEvent" as Event {
+    +id: EventId
+    +organizer_id: UserId
+    +title: str
+    +category: str
+    +location: str
+    +start_at: datetime?
+    +end_at: datetime?
+    +sale_start_at: datetime
+    +registration_deadline: datetime
+    +status: EventStatus
+    +visibility: Visibility
+    +review_note: str
+    +min_price: Decimal?
+    +published_at: datetime?
+    +revision: int
+    +version: int
+    +submit_for_review(now)
+    +approve(reviewer, now)
+    +reject(reviewer, reason, now)
+    +cancel(now)
+    +unlist(reason, by, now)
+    +sync_derived(sessions)
+  }
+  class "场次\nEventSession" as EventSession {
+    +id: EventSessionId
+    +event_id: EventId
+    +start_at: datetime
+    +end_at: datetime
+    +capacity: int
+    +booked_count: int
+    +next_waitlist_no: int
+    +settled_at: datetime?
+    +ticket_types: TicketType[]
+    +version: int
+    +is_finished(now): bool
+    +assert_capacity_allows(new, occupied)
+  }
+  class "票种\nTicketType" as TicketType {
+    +id: TicketTypeId
+    +session_id: EventSessionId
+    +name: str
+    +price: Decimal
+    +quota: int
+    +sold_count: int
+  }
+}
+
+package "报名与签到 M3 / M4" {
+  class "报名记录\nRegistration" as Registration {
+    +id: RegistrationId
+    +event_id: EventId
+    +session_id: EventSessionId
+    +ticket_type_id: TicketTypeId
+    +participant_id: UserId
+    +purchaser_id: UserId
+    +status: RegistrationStatus
+    +waitlist_no: int
+    +seat_no: int
+    +payment_status: PaymentStatus
+    +payment_ref: str
+    +qr_nonce: str
+    +version: int
+    +promote(seat_no, now)
+    +cancel(by, reason, now): CancelOutcome
+    +invalidate(reason, now)
+    +check_in_now(inspector, method, now)
+    +make_up_check_in(inspector, reason, now)
+    +refund(now)
+  }
+  class "签到\nCheckIn" as CheckIn {
+    +id: str
+    +registration_id: RegistrationId
+    +inspector_id: UserId
+    +checked_in_at: datetime
+    +method: CheckInMethod
+    +note: str
+  }
+}
+
+package "枚举" {
+  enum "角色\nRole" as Role {
+    PARTICIPANT
+    ORGANIZER
+    INSPECTOR
+    ADMIN
+  }
+  enum "活动状态\nEventStatus" as EventStatus {
+    DRAFT
+    PENDING_REVIEW
+    REVIEW_REJECTED
+    PUBLISHED
+    ENDED
+    CANCELLED
+  }
+  enum "可见性\nVisibility" as Visibility {
+    LISTED
+    DELISTED
+  }
+  enum "报名状态\nRegistrationStatus" as RegistrationStatus {
+    WAITLISTED
+    REGISTERED
+    CHECKED_IN
+    ABSENT
+    CANCELLED
+    INVALIDATED
+  }
+  enum "支付状态\nPaymentStatus" as PaymentStatus {
+    PAID
+    REFUNDED
+  }
+  enum "签到方式\nCheckInMethod" as CheckInMethod {
+    SCAN
+    MAKEUP
+  }
+}
+
+User "1" -- "*" AuthSession : 拥有
+User "1" -- "*" OrganizerApplication : 申请
+User "1" -- "*" BlacklistEntry : 组织者
+User "1" -- "*" BlacklistEntry : 参与者
+User "1" -- "*" SessionAssignment : 被分配为检票员
+User "1" -- "*" Event : 组织
+Event "1" *-- "*" EventSession : 包含
+EventSession "1" *-- "*" TicketType : 提供
+EventSession "1" -- "*" Registration : 产生
+User "1" -- "*" Registration : 参与者
+User "1" -- "*" Registration : 代报购买者
+Registration "1" *-- "0..1" CheckIn : 对应
+
+legend right
+  类图只列关键字段与方法，完整签名见设计文档 §4。
+  Event.start_at/end_at/min_price 由场次与票种派生，草稿可为空。
+  三聚合：Event（生命周期）/ EventSession（名额账本）/ Registration（报名与签到）
+  名额唯一写者：SeatInventoryPort；EventSessionRepository.save_metadata 禁写计数
+  一报名一签到：CheckIn 为 Registration 聚合内实体，UNIQUE(registration_id)
+endlegend
+@enduml

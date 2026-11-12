@@ -1,0 +1,52 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 12
+skinparam activity {
+  BackgroundColor #F7F9FC
+  BorderColor #4A6FA5
+  ArrowColor #4A6FA5
+  DiamondBackgroundColor #FFFFFF
+}
+title 图 8 报名活动图（含满员候补）
+
+start
+:参与者提交报名 / 代报名请求;
+:解析登录 ActorContext;
+:查询请求幂等键;
+if (已有完成记录?) then (是)
+  :返回原结果（replayed = true）;
+  stop
+endif
+
+:校验活动可见、报名截止、是否被拉黑;
+if (校验通过?) then (否)
+  :返回可读错误提示;
+  stop
+endif
+
+:对每个受益人执行 SeatInventoryPort.claim;
+if (有名额?) then (是)
+  :创建 REGISTERED 报名;
+  :分配 seat_no;
+  :生成二维码票证;
+else (场次或票种已满)
+  :创建 WAITLISTED 报名;
+  :原子分配 waitlist_no;
+endif
+
+:写发件箱事件 + 成功审计;
+:提交事务;
+:异步投递发件箱;
+:站内通知参与者;
+stop
+
+legend right
+  幂等三层：请求键 + (session_id, participant_id) 唯一索引 + 数据库约束
+  并发防超卖：单条条件 UPDATE（booked_count < capacity）
+  候补：不占名额；递补时按 waitlist_no 扫描，票种满则跳过
+  已有有效报名：返回 ALREADY_REGISTERED，不新增
+endlegend
+@enduml

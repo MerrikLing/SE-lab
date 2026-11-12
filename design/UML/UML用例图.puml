@@ -1,0 +1,114 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 11
+skinparam usecase {
+  BackgroundColor #F7F9FC
+  BorderColor #4A6FA5
+  ArrowColor #4A6FA5
+}
+left to right direction
+title 图 5 用例图（四类角色 + 系统定时任务）
+
+actor "参与者" as P
+actor "组织者" as O
+actor "检票员" as I
+actor "平台管理员" as A
+actor "系统定时任务" as S <<system>>
+
+rectangle "活动票务与报名系统" {
+  package "参与者用例" {
+    usecase "查询与筛选活动" as UC01
+    usecase "查看活动详情" as UC02
+    usecase "报名 / 代他人报名" as UC03
+    usecase "取消报名" as UC04
+    usecase "查看我的报名与票证" as UC05
+    usecase "评价活动" as UC06
+    usecase "收藏活动" as UC07
+    usecase "举报活动 / 查看结果" as UC08
+    usecase "申请成为组织者" as UC09
+    usecase "查看站内消息" as UC10
+  }
+  package "组织者用例" {
+    usecase "创建活动（场次/票种）" as UC11
+    usecase "编辑活动（场次/票种）" as UC12
+    usecase "提交审核" as UC13
+    usecase "取消活动" as UC14
+    usecase "查看 / 导出名单" as UC15
+    usecase "查看容量与参与率" as UC16
+    usecase "拉黑 / 解除拉黑" as UC17
+    usecase "分配 / 撤销检票员" as UC18
+  }
+  package "检票员用例" {
+    usecase "扫码验票签到" as UC19
+    usecase "场次结束后补签" as UC20
+    usecase "查看分配场次与统计" as UC21
+  }
+  package "管理员用例" {
+    usecase "审核活动（通过/不通过）" as UC22
+    usecase "强制下架 / 恢复上架" as UC23
+    usecase "审批组织者申请" as UC24
+    usecase "处理举报" as UC25
+    usecase "审批完整信息导出" as UC26
+    usecase "查询操作日志" as UC27
+    usecase "查看平台统计" as UC28
+    usecase "角色与权限管理" as UC29
+  }
+  package "系统定时用例" {
+    usecase "场次结束判缺席" as UC30
+    usecase "活动自动结束" as UC31
+    usecase "开票前 1 小时提醒" as UC32
+    usecase "每日备份" as UC33
+  }
+}
+
+P --> UC01
+P --> UC02
+P --> UC03
+P --> UC04
+P --> UC05
+P --> UC06
+P --> UC07
+P --> UC08
+P --> UC09
+P --> UC10
+
+O --> UC11
+O --> UC12
+O --> UC13
+O --> UC14
+O --> UC15
+O --> UC16
+O --> UC17
+O --> UC18
+
+I --> UC19
+I --> UC20
+I --> UC21
+
+A --> UC22
+A --> UC23
+A --> UC24
+A --> UC25
+A --> UC26
+A --> UC27
+A --> UC28
+A --> UC29
+
+S --> UC30
+S --> UC31
+S --> UC32
+S --> UC33
+
+UC20 .> UC19 : 扩展
+UC23 .> UC22 : 扩展
+
+legend right
+  参与者只查看本人报名与公开容量信息
+  组织者只管理本人活动；检票员只操作被分配场次
+  管理员只负责审核、下架、审批、治理与查询，不代替组织者编辑活动
+  系统定时任务由驱动适配器触发，对应应用服务方法幂等
+endlegend
+@enduml

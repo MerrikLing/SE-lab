@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>场次 · 组织者活动管理</title>
+<link rel="stylesheet" href="ui.css">
+<style>
+  .s3-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;border-bottom:1px solid var(--ink);padding-bottom:15px}
+  .s3-head h1{font-size:38px;margin:7px 0 0;letter-spacing:-1.5px}
+  .s3-head .meta{font-size:11px;color:var(--muted);margin-top:6px}
+  .s3-actions{display:flex;gap:8px;align-items:center}
+  .pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:16px 0 18px;border-bottom:1px solid var(--line)}
+  .step{padding:10px 14px 12px 0;border-top:3px solid var(--line);position:relative}
+  .step .num{font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;letter-spacing:1.4px;color:var(--muted)}
+  .step h4{font-size:12px;margin:5px 0 3px;font-weight:700}
+  .step p{font-size:9px;color:var(--muted);margin:0;line-height:1.4}
+  .step.done{border-top-color:var(--mint)}
+  .step.current{border-top-color:var(--blue)}
+  .step.current .num{color:var(--blue)}
+  .s3-body{display:grid;grid-template-columns:1fr 326px;gap:22px;flex:1;min-height:0}
+  .s3-left{min-width:0;display:flex;flex-direction:column}
+  .session-card{display:grid;grid-template-columns:76px 1fr;--stub:76px;margin-bottom:13px;box-shadow:4px 4px 0 rgba(21,21,21,.9)}
+  .session-card .body{padding:9px 13px 8px;min-width:0}
+  .session-card .head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .session-card h3{font-family:"Bahnschrift","Microsoft YaHei UI",sans-serif;font-size:17px;letter-spacing:-.4px;margin:1px 0 1px}
+  .session-card .place{font-size:9px;color:var(--muted);margin-bottom:5px}
+  .cap-line{display:flex;justify-content:space-between;font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;color:var(--muted);margin-bottom:3px}
+  .session-card .table th{padding:3px 5px}
+  .session-card .table td{padding:3px 5px}
+  .session-card .table td:first-child,.session-card .table th:first-child{padding-left:0}
+  .session-card .table td:last-child,.session-card .table th:last-child{padding-right:0;text-align:right}
+  .session-card .foot{display:flex;justify-content:space-between;align-items:center;margin-top:5px}
+  .trend-card{border:1px solid var(--ink);background:var(--paper-2);padding:9px 12px 7px;margin-top:0}
+  .trend{display:flex;align-items:flex-end;gap:7px;height:46px;margin-top:6px}
+  .trend i{flex:1;background:var(--blue);min-height:4px;position:relative}
+  .trend i:nth-child(6){background:var(--orange)}
+  .trend-labels{display:flex;gap:7px;margin-top:5px}
+  .trend-labels span{flex:1;text-align:center;font-family:"Cascadia Mono",Consolas,monospace;font-size:7px;color:var(--muted)}
+  .s3-right{display:flex;flex-direction:column;gap:13px;min-height:0}
+  .side-card{border:1px solid var(--ink);background:var(--paper-2);padding:11px 12px}
+  .side-card h3{font-family:"Bahnschrift","Microsoft YaHei UI",sans-serif;font-size:15px;margin:4px 0 8px;letter-spacing:-.3px}
+  .timeline{position:relative;padding-left:13px}
+  .timeline::before{content:"";position:absolute;left:3px;top:3px;bottom:3px;width:1px;background:var(--line)}
+  .tl-item{position:relative;padding:0 0 7px 0;font-size:10px;line-height:1.4}
+  .tl-item:last-child{padding-bottom:0}
+  .tl-item::before{content:"";position:absolute;left:-13px;top:4px;width:7px;height:7px;border-radius:50%;background:var(--paper-2);border:1px solid var(--ink)}
+  .tl-item.now::before{background:var(--orange);border-color:var(--orange)}
+  .tl-item .t{font-family:"Cascadia Mono",Consolas,monospace;font-size:8px;color:var(--muted)}
+  .tl-item b{font-weight:700}
+  .tl-item .note{color:var(--muted);font-size:9px;margin-top:2px}
+  .check{display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-top:1px solid var(--line);font-size:10px;line-height:1.35}
+  .check:first-of-type{border-top:0}
+  .check .box{width:13px;height:13px;border:1px solid var(--ink);flex:0 0 auto;margin-top:1px;position:relative;background:var(--mint)}
+  .check .box::after{content:"";position:absolute;left:3px;top:1px;width:4px;height:7px;border:solid var(--ink);border-width:0 2px 2px 0;transform:rotate(45deg)}
+  .check.todo .box{background:transparent}
+  .check.todo .box::after{display:none}
+  .check .sub{display:block;color:var(--muted);font-size:8px;margin-top:1px}
+  .side-actions{display:flex;flex-direction:column;gap:7px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark"></span><div><div class="brand-name">场次</div><div class="brand-sub">TICKET / 2026</div></div></div>
+    <div class="role-switch"><div class="role">组织者<small>ORGANIZER</small></div><span class="chev">⌄</span></div>
+    <div class="nav-label">MANAGE</div>
+    <nav class="nav">
+      <a class="active" href="#"><span class="n">01</span>活动管理</a>
+      <a href="#"><span class="n">02</span>场次与票种</a>
+      <a href="#"><span class="n">03</span>报名名单</a>
+      <a href="#"><span class="n">04</span>数据统计</a>
+    </nav>
+    <div class="nav-label">OPERATE</div>
+    <nav class="nav">
+      <a href="#"><span class="n">05</span>检票员分配</a>
+      <a href="#"><span class="n">06</span>黑名单</a>
+      <a href="#"><span class="n">07</span>审核记录</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="user"><div class="avatar" style="background:var(--orange)">周</div><div><div class="user-name">周予安</div><div class="user-meta">回声文化 · 演出部</div></div></div>
+      <div class="sysline"><span>2026</span><span>v0.5</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="crumb"><b>ORGANIZER</b> / 活动管理 / EV-1024</div>
+      <div class="top-actions">
+        <span class="pill"><span class="live-dot" style="background:var(--orange)"></span>待审核 · 1 条退回意见</span>
+        <button class="icon-btn" aria-label="帮助"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-.9.7-1.5 1.2-1.5 2.4"></path><path d="M12 17h.01"></path></svg></button>
+      </div>
+    </div>
+
+    <section class="s3-head">
+      <div>
+        <div class="eyebrow">ORGANIZER CONSOLE / EVENT 1024</div>
+        <h1 class="display">午夜电台 · 现场演出</h1>
+        <div class="meta">主办：回声文化 · 演出部　·　2 个场次　·　3 个票种　·　创建于 10/20</div>
+      </div>
+      <div class="s3-actions">
+        <span class="stamp orange">待审核</span>
+        <button class="btn btn-ghost btn-sm">预览</button>
+        <button class="btn btn-ghost btn-sm">编辑</button>
+        <button class="btn btn-accent">提交审核</button>
+      </div>
+    </section>
+
+    <div class="pipeline">
+      <div class="step done"><div class="num">01 / DRAFT</div><h4>草稿</h4><p>创建活动、场次与票种</p></div>
+      <div class="step current"><div class="num">02 / REVIEW</div><h4>待审核</h4><p>管理员审核中 · 已退回 1 次</p></div>
+      <div class="step"><div class="num">03 / PUBLISHED</div><h4>已发布</h4><p>审核通过后对参与者可见</p></div>
+      <div class="step"><div class="num">04 / ENDED</div><h4>已结束</h4><p>所有场次结束自动归档</p></div>
+    </div>
+
+    <div class="s3-body">
+      <section class="s3-left">
+        <article class="ticket session-card">
+          <div class="ticket-stub">
+            <div><div class="code">S-01</div><div class="date">10/24</div><div class="day">FRI</div></div>
+            <div class="barcode"></div>
+          </div>
+          <div class="body">
+            <div class="head">
+              <div><h3>第一场 · 10/24 周五 19:30</h3><div class="place">滨江艺术中心 · 主厅 · 120 人</div></div>
+              <span class="stamp blue">待审核</span>
+            </div>
+            <div class="cap-line"><span>已报名 108 / 120</span><span>90% · 候补 6</span></div>
+            <div class="meter orange"><i style="width:90%"></i></div>
+            <table class="table" style="margin-top:7px">
+              <thead><tr><th>票种</th><th>票价</th><th>名额</th><th>已售</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td>早鸟票</td><td class="num">¥60</td><td class="num">40</td><td class="num">40</td><td style="text-align:right"><span class="stamp dark">售罄</span></td></tr>
+                <tr><td>标准票</td><td class="num">¥80</td><td class="num">70</td><td class="num">62</td><td style="text-align:right"><span class="stamp green">在售</span></td></tr>
+                <tr><td>VIP 票</td><td class="num">¥120</td><td class="num">10</td><td class="num">6</td><td style="text-align:right"><span class="stamp green">在售</span></td></tr>
+              </tbody>
+            </table>
+            <div class="foot"><span class="mono" style="font-size:8px;color:var(--muted)">更新于 10/23 09:12</span><div class="row gap6"><button class="btn btn-ghost btn-sm">票种</button><button class="btn btn-ghost btn-sm">编辑场次</button></div></div>
+          </div>
+        </article>
+
+        <article class="ticket session-card">
+          <div class="ticket-stub">
+            <div><div class="code">S-02</div><div class="date">10/25</div><div class="day">SAT</div></div>
+            <div class="barcode"></div>
+          </div>
+          <div class="body">
+            <div class="head">
+              <div><h3>第二场 · 10/25 周六 19:30</h3><div class="place">滨江艺术中心 · 主厅 · 120 人</div></div>
+              <span class="stamp blue">待审核</span>
+            </div>
+            <div class="cap-line"><span>已报名 114 / 120</span><span>95% · 候补 0</span></div>
+            <div class="meter orange"><i style="width:95%"></i></div>
+            <table class="table" style="margin-top:7px">
+              <thead><tr><th>票种</th><th>票价</th><th>名额</th><th>已售</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td>早鸟票</td><td class="num">¥60</td><td class="num">40</td><td class="num">40</td><td style="text-align:right"><span class="stamp dark">售罄</span></td></tr>
+                <tr><td>标准票</td><td class="num">¥80</td><td class="num">70</td><td class="num">68</td><td style="text-align:right"><span class="stamp green">在售</span></td></tr>
+                <tr><td>VIP 票</td><td class="num">¥120</td><td class="num">10</td><td class="num">6</td><td style="text-align:right"><span class="stamp green">在售</span></td></tr>
+              </tbody>
+            </table>
+            <div class="foot"><span class="mono" style="font-size:8px;color:var(--muted)">更新于 10/23 09:12</span><div class="row gap6"><button class="btn btn-ghost btn-sm">票种</button><button class="btn btn-ghost btn-sm">编辑场次</button></div></div>
+          </div>
+        </article>
+
+        <section class="trend-card">
+          <div class="between"><div class="eyebrow">报名趋势 / LAST 7 DAYS</div><div class="mono" style="font-size:8px;color:var(--muted)">+18 今日</div></div>
+          <div class="trend">
+            <i style="height:26%"></i><i style="height:38%"></i><i style="height:32%"></i><i style="height:55%"></i><i style="height:48%"></i><i style="height:82%"></i><i style="height:64%"></i>
+          </div>
+          <div class="trend-labels"><span>10/17</span><span>10/18</span><span>10/19</span><span>10/20</span><span>10/21</span><span>10/22</span><span>10/23</span></div>
+        </section>
+      </section>
+
+      <aside class="s3-right">
+        <section class="side-card">
+          <div class="between"><div class="eyebrow">REVIEW LOG / 审核记录</div><span class="stamp orange">1 次退回</span></div>
+          <h3>最近一次：补充场地安全说明</h3>
+          <div class="timeline">
+            <div class="tl-item"><div class="t">10/22 14:20</div><b>提交审核</b><div class="note">第 2 轮 · 由周予安提交</div></div>
+            <div class="tl-item now"><div class="t">10/22 16:05</div><b>管理员退回</b><div class="note">“请补充 B1 场地安全说明与疏散方案。”</div></div>
+            <div class="tl-item"><div class="t">10/23 09:12</div><b>重新提交</b><div class="note">已补充附件 · 等待管理员复核</div></div>
+          </div>
+        </section>
+
+        <section class="side-card">
+          <div class="eyebrow">PUBLISH CHECK / 发布检查</div>
+          <h3>还差 1 项</h3>
+          <div class="check"><span class="box"></span><span>活动信息完整<span class="sub">标题、类型、地点、起止时间</span></span></div>
+          <div class="check"><span class="box"></span><span>至少 1 个场次、1 个票种</span></div>
+          <div class="check"><span class="box"></span><span>容量 ≥ 已报名人数<span class="sub">当前 120 ≥ 114</span></span></div>
+          <div class="check todo"><span class="box"></span><span>场地安全说明<span class="sub">附件待管理员确认</span></span></div>
+        </section>
+
+        <section class="side-card" style="margin-top:auto">
+          <div class="between"><div class="eyebrow">QUICK ACTIONS</div><span class="mono" style="font-size:8px;color:var(--muted)">3</span></div>
+          <button class="btn btn-primary btn-block" style="margin-top:8px">提交审核</button>
+          <div class="row gap8" style="margin-top:6px">
+            <button class="btn btn-ghost btn-sm grow">预览</button>
+            <button class="btn btn-ghost btn-sm grow">导出名单</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</div>
+</body>
+</html>
